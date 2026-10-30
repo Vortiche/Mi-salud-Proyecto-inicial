@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>MiSalud - Agendamiento</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 40px; }
+        .container { max-width: 600px; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin: auto; }
+        h2 { color: #333; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="text"], input[type="date"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; background-color: #007bff; color: white; border: none; padding: 12px; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        .btn-confirmar { background-color: #28a745; margin-top: 15px; }
+        .btn-confirmar:hover { background-color: #218838; }
+        .alerta { padding: 15px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .exito { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .box-especialistas { background-color: #e2e3e5; padding: 15px; border-radius: 4px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Sistema de Agendamiento - MiSalud</h2>
+
+    <!-- Alertas de Error -->
+    {% if mensaje_error %}
+        <div class="alerta error">{{ mensaje_error }}</div>
+    {% endif %}
+
+    <!-- PASO 7: Resultado observable de éxito -->
+    {% if mensaje_exito %}
+        <div class="alerta exito">{{ mensaje_exito }}</div>
+    {% endif %}
+
+    <!-- FORMULARIO: PASO 1 (Ingresar Datos y Buscar) -->
+    {% if not especialistas and not mensaje_exito %}
+    <form method="POST">
+        {% csrf_token %} <!-- Llave de seguridad obligatoria en Django -->
+        
+        <div class="form-group">
+            <label>RUT del Paciente:</label>
+            <input type="text" name="rut" value="{{ rut }}" placeholder="Ej: 12345678-9" required>
+        </div>
+
+        <div class="form-group">
+            <label>Servicio médico requerido:</label>
+            <select name="servicio">
+                <option value="Medicina General">Medicina General</option>
+                <option value="Pediatría">Pediatría</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Sucursal de atención:</label>
+            <select name="sucursal">
+                <option value="Centro">Centro</option>
+                <option value="Norte">Norte</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Fecha deseada:</label>
+            <input type="date" name="fecha" value="{{ fecha }}" required>
+        </div>
+
+        <div class="form-group">
+            <label>Bloque horario deseado:</label>
+            <input type="text" name="horario" value="{{ horario }}" placeholder="Ej: 10:00" required>
+        </div>
+
+        <button type="submit" name="buscar">Buscar Especialistas Disponibles</button>
+    </form>
+    {% endif %}
+
+    <!-- PASO 3 y 4: Mostrar Resultados y Confirmar -->
+    {% if especialistas %}
+    <div class="box-especialistas">
+        <h3>Especialistas Disponibles Encontrados:</h3>
+        
+        <form method="POST">
+            {% csrf_token %}
+            <!-- Guardamos los datos anteriores ocultos para procesar la reserva -->
+            <input type="hidden" name="rut" value="{{ rut }}">
+            <input type="hidden" name="servicio" value="{{ servicio }}">
+            <input type="hidden" name="sucursal" value="{{ sucursal }}">
+            <input type="hidden" name="fecha" value="{{ fecha }}">
+            <input type="hidden" name="horario" value="{{ horario }}">
+
+            <div class="form-group">
+                <label>Seleccione el profesional de la lista:</label>
+                <select name="profesional_id" required>
+                    {% for prof in especialistas %}
+                        <option value="{{ prof.id }}">{{ prof.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <p>¿Desean confirmar la solicitud para el bloque <strong>{{ horario }}</strong>?</p>
+            <button type="submit" name="confirmar" class="btn-confirmar">Confirmar e Inscribir Hora</button>
+        </form>
+    </div>
+    {% endif %}
+
+</div>
+
+</body>
+</html>
